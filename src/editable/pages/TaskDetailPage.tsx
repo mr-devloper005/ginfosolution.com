@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import type { CSSProperties } from 'react'
 import { notFound } from 'next/navigation'
-import { ArrowLeft, Bookmark, Building2, Camera, CheckCircle2, Download, ExternalLink, FileText, Globe2, Mail, MapPin, MessageCircle, Phone, Tag, UserRound } from 'lucide-react'
+import { ArrowLeft, Bookmark, Building2, Camera, CheckCircle2, Download, ExternalLink, FileText, Globe2, Image as ImageIcon, Mail, MapPin, MessageCircle, Phone, Star, Tag, UserRound } from 'lucide-react'
 import { buildPostMetadata, buildTaskMetadata } from '@/lib/seo'
 import { buildPostUrl, fetchArticleComments, fetchTaskPostBySlug, fetchTaskPosts } from '@/lib/task-data'
 import { getTaskConfig, SITE_CONFIG, type TaskKey } from '@/lib/site-config'
@@ -62,6 +62,12 @@ const escapeHtml = (value: string) => value
   .replace(/'/g, '&#39;')
 
 const safeUrl = (value: string) => /^https?:\/\//i.test(value) ? value : '#'
+const externalUrl = (value: string) => {
+  if (!value) return ''
+  if (/^https?:\/\//i.test(value)) return value
+  if (value.startsWith('/')) return value
+  return `https://${value}`
+}
 
 const linkifyMarkdown = (value: string) => value
   .replace(/\[([^\]]+)]\((https?:\/\/[^\s)]+)\)/gi, (_match, label, url) => `<a href="${safeUrl(url)}" target="_blank" rel="nofollow noopener noreferrer">${label}</a>`)
@@ -152,33 +158,96 @@ function ArticleDetail({ post, related, comments }: { post: SitePost; related: S
 function ListingDetail({ post, related }: { post: SitePost; related: SitePost[] }) {
   const images = getImages(post)
   const logo = images[0]
+  const heroImage = images[1] || images[0] || '/placeholder.svg?height=900&width=1400'
+  const sideImage = images[2] || images[0] || heroImage
+  const gallery = Array.from(new Set(images.length ? images : [heroImage])).slice(0, 6)
   const address = getField(post, ['address', 'location', 'city'])
   const phone = getField(post, ['phone', 'telephone', 'mobile'])
   const email = getField(post, ['email'])
   const website = getField(post, ['website', 'url'])
   const mapSrc = mapSrcFor(post)
+  const websiteHref = externalUrl(website)
+  const directionsHref = address ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}` : ''
   return (
-    <section className="mx-auto max-w-[var(--editable-container)] px-4 py-10 sm:px-6 lg:px-8 lg:py-16">
-      <BackLink task="listing" />
-      <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1fr)_420px]">
-        <article className="rounded-[2.8rem] border border-[var(--editable-border)] bg-white p-6 shadow-[0_30px_90px_rgba(15,23,42,0.09)] sm:p-9">
-          <div className="grid gap-6 sm:grid-cols-[150px_1fr]">
-            <div className="flex h-36 w-36 items-center justify-center overflow-hidden rounded-[2rem] bg-[var(--detail-bg)] ring-1 ring-[var(--editable-border)]">
-              {logo ? <img src={logo} alt="" className="h-full w-full object-cover" /> : <Building2 className="h-14 w-14 opacity-40" />}
+    <section className="bg-[var(--slot4-page-bg)]">
+      <div className="mx-auto max-w-[1200px] px-4 pt-8 sm:px-6 lg:px-8">
+        <BackLink task="listing" />
+      </div>
+
+      <section className="mx-auto mt-8 grid max-w-[1200px] overflow-hidden border border-black/10 bg-[#101010] text-white shadow-[0_30px_90px_rgba(0,0,0,0.18)] lg:grid-cols-[1.08fr_0.92fr]">
+        <div className="relative min-h-[420px]">
+          <img src={heroImage} alt="" className="absolute inset-0 h-full w-full object-cover opacity-76" />
+          <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(0,0,0,0.82),rgba(0,0,0,0.42)_52%,rgba(0,0,0,0.08))]" />
+          <div className="relative z-10 flex min-h-[420px] flex-col justify-end p-7 sm:p-10">
+            <div className="mb-8 flex w-fit items-center gap-2 bg-white/12 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] backdrop-blur">
+              <CheckCircle2 className="h-4 w-4 text-[var(--detail-accent)]" /> Business listing
             </div>
-            <div>
-              <p className="text-xs font-black uppercase tracking-[0.28em] text-[var(--detail-accent)]">Business listing</p>
-              <h1 className="mt-3 text-4xl font-black leading-[0.98] tracking-[-0.07em] sm:text-6xl">{post.title}</h1>
-              <p className="mt-5 max-w-3xl text-base leading-8 opacity-70">{summaryText(post)}</p>
+            <h1 className="max-w-2xl text-5xl font-semibold leading-[0.96] tracking-[-0.065em] sm:text-7xl">{post.title}<span className="text-[var(--detail-accent)]">.</span></h1>
+            <div className="mt-6 flex flex-wrap gap-3 text-sm font-semibold text-white/86">
+              {address ? <span className="inline-flex items-center gap-2"><MapPin className="h-4 w-4 text-[var(--detail-accent)]" /> {address}</span> : null}
+              <span className="inline-flex items-center gap-1">{[0, 1, 2, 3, 4].map((item) => <Star key={item} className="h-4 w-4 fill-[var(--detail-accent)] text-[var(--detail-accent)]" />)} Featured</span>
+            </div>
+          
+          </div>
+        </div>
+
+        <div className="grid border-t border-white/10 lg:border-l lg:border-t-0">
+          <div className="relative min-h-[240px] overflow-hidden">
+            <img src={sideImage} alt="" className="absolute inset-0 h-full w-full object-cover opacity-58" />
+            <div className="absolute inset-0 bg-black/42" />
+            <div className="relative z-10 flex h-full min-h-[240px] flex-col justify-end p-7">
+              <div className="flex flex-wrap gap-3">
+                <Link href="/signup" className="inline-flex items-center gap-2 bg-white px-4 py-2.5 text-sm font-semibold text-black">Claim listing <ExternalLink className="h-4 w-4" /></Link>
+                
+              </div>
             </div>
           </div>
-          <InfoGrid items={[['Location', address, MapPin], ['Phone', phone, Phone], ['Email', email, Mail], ['Website', website, Globe2]]} />
-          <BodyContent post={post} />
-          <ImageStrip images={images.slice(1)} label="Business showcase" />
+          <div className="grid gap-3 bg-[#101010] p-7 sm:grid-cols-2">
+            {phone ? <a href={`tel:${phone}`} className="inline-flex items-center justify-center gap-2 bg-[var(--detail-accent)] px-5 py-3 text-sm font-semibold text-white">Call business <Phone className="h-4 w-4" /></a> : null}
+            {websiteHref ? <Link href={websiteHref} target="_blank" rel="noreferrer" className="inline-flex items-center justify-center gap-2 bg-white px-5 py-3 text-sm font-semibold text-black">Visit website <ExternalLink className="h-4 w-4" /></Link> : null}
+            {email ? <a href={`mailto:${email}`} className="inline-flex items-center justify-center gap-2 border border-white/20 px-5 py-3 text-sm font-semibold text-white">Email <Mail className="h-4 w-4" /></a> : null}
+            {directionsHref ? <Link href={directionsHref} target="_blank" rel="noreferrer" className="inline-flex items-center justify-center gap-2 border border-white/20 px-5 py-3 text-sm font-semibold text-white">Directions <MapPin className="h-4 w-4" /></Link> : null}
+          </div>
+        </div>
+      </section>
+
+      <div className="mx-auto grid max-w-[1200px] gap-7 px-4 py-12 sm:px-6 lg:grid-cols-[minmax(0,1fr)_380px] lg:px-8">
+        <article className="space-y-7">
+          <section className="border border-[var(--editable-border)] bg-white p-6 shadow-sm sm:p-9">
+            <div className="grid gap-6 border-b border-black/10 pb-7 sm:grid-cols-[120px_1fr]">
+              <div className="flex h-28 w-28 items-center justify-center overflow-hidden bg-[var(--detail-bg)] ring-1 ring-[var(--editable-border)]">
+                {logo ? <img src={logo} alt="" className="h-full w-full object-cover" /> : <Building2 className="h-12 w-12 opacity-40" />}
+              </div>
+              <div>
+                <p className="text-xs font-black uppercase tracking-[0.24em] text-[var(--detail-accent)]">Overview</p>
+                <h2 className="mt-3 text-3xl font-semibold tracking-[-0.05em]">About this business</h2>
+                <p className="mt-3 text-sm leading-7 text-[var(--slot4-muted-text)]">Use this profile to understand services, coverage, contact options, and whether this business fits what you need.</p>
+              </div>
+            </div>
+            <InfoGrid items={[['Location', address, MapPin], ['Phone', phone, Phone], ['Email', email, Mail], ['Website', website, Globe2]]} />
+            <BodyContent post={post} />
+          </section>
+
+          <section id="business-review" className="border border-[var(--editable-border)] bg-white p-6 shadow-sm sm:p-8">
+            <div className="flex flex-wrap items-center justify-between gap-4 border-b border-black/10 pb-5">
+              <div>
+                <p className="text-xs font-black uppercase tracking-[0.22em] text-[var(--detail-accent)]">Reviews</p>
+                <h2 className="mt-2 text-2xl font-semibold tracking-[-0.04em]">Rate and write a review</h2>
+              </div>
+              <Link href="/login" className="inline-flex items-center gap-2 bg-black px-5 py-3 text-sm font-semibold text-white">Log in to review <ExternalLink className="h-4 w-4" /></Link>
+            </div>
+            <div className="mt-6 flex flex-wrap items-center gap-4 text-sm text-[var(--slot4-muted-text)]">
+              <span className="inline-flex items-center gap-1">{[0, 1, 2, 3, 4].map((item) => <Star key={item} className="h-5 w-5 fill-[var(--detail-accent)] text-[var(--detail-accent)]" />)}</span>
+              <span>Share your experience after signing in. Public reviews help future customers choose with confidence.</span>
+            </div>
+          </section>
         </article>
-        <aside className="space-y-5">
-          {mapSrc ? <MapBox src={mapSrc} label={address || post.title} /> : <ContactAction website={website} phone={phone} email={email} />}
-          {mapSrc ? <ContactAction website={website} phone={phone} email={email} /> : null}
+
+        <aside className="space-y-6 lg:sticky lg:top-28 lg:self-start">
+          {mapSrc ? <MapBox src={mapSrc} label={address || post.title} /> : <ContactAction website={websiteHref} phone={phone} email={email} />}
+          {mapSrc ? <ContactAction website={websiteHref} phone={phone} email={email} /> : null}
+          <GalleryBox title={post.title} images={gallery} />
+          <HoursBox />
           <RelatedPanel task="listing" post={post} related={related} compact />
         </aside>
       </div>
@@ -350,8 +419,8 @@ function ImageStrip({ images, label, large = false }: { images: string[]; label:
 
 function MapBox({ src, label }: { src: string; label: string }) {
   return (
-    <div className="overflow-hidden rounded-[2rem] border border-[var(--editable-border)] bg-white shadow-sm">
-      <div className="flex items-center gap-2 p-4 text-sm font-black"><MapPin className="h-4 w-4" /> {label || 'Map location'}</div>
+    <div className="overflow-hidden border border-[var(--editable-border)] bg-white shadow-sm">
+      <div className="flex items-center gap-2 border-b border-black/10 p-4 text-sm font-black"><MapPin className="h-4 w-4 text-[var(--detail-accent)]" /> {label || 'Map location'}</div>
       <iframe src={src} title="Map" loading="lazy" className="h-80 w-full border-0" />
     </div>
   )
@@ -360,14 +429,42 @@ function MapBox({ src, label }: { src: string; label: string }) {
 function ContactAction({ website, phone, email }: { website?: string; phone?: string; email?: string }) {
   if (!website && !phone && !email) return null
   return (
-    <div className="mt-5 rounded-[2rem] border border-[var(--editable-border)] bg-white p-5 shadow-sm">
+    <div className="border border-[var(--editable-border)] bg-white p-5 shadow-sm">
       <p className="text-xs font-black uppercase tracking-[0.22em] opacity-55">Quick actions</p>
       <div className="mt-4 flex flex-wrap gap-3">
-        {website ? <Link href={website} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-full bg-[var(--detail-text)] px-4 py-2 text-sm font-black text-[var(--detail-bg)]">Website <ExternalLink className="h-4 w-4" /></Link> : null}
-        {phone ? <a href={`tel:${phone}`} className="inline-flex items-center gap-2 rounded-full border border-[var(--editable-border)] px-4 py-2 text-sm font-black"><Phone className="h-4 w-4" /> Call</a> : null}
-        {email ? <a href={`mailto:${email}`} className="inline-flex items-center gap-2 rounded-full border border-[var(--editable-border)] px-4 py-2 text-sm font-black"><Mail className="h-4 w-4" /> Email</a> : null}
+        {website ? <Link href={externalUrl(website)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 bg-[var(--detail-text)] px-4 py-2 text-sm font-black text-[var(--detail-bg)]">Website <ExternalLink className="h-4 w-4" /></Link> : null}
+        {phone ? <a href={`tel:${phone}`} className="inline-flex items-center gap-2 border border-[var(--editable-border)] px-4 py-2 text-sm font-black"><Phone className="h-4 w-4" /> Call</a> : null}
+        {email ? <a href={`mailto:${email}`} className="inline-flex items-center gap-2 border border-[var(--editable-border)] px-4 py-2 text-sm font-black"><Mail className="h-4 w-4" /> Email</a> : null}
       </div>
     </div>
+  )
+}
+
+function GalleryBox({ images, title }: { images: string[]; title: string }) {
+  if (!images.length) return null
+  return (
+    <section className="border border-[var(--editable-border)] bg-white p-5 shadow-sm">
+      <div className="flex items-center gap-2 border-b border-black/10 pb-4 text-sm font-black"><ImageIcon className="h-4 w-4 text-[var(--detail-accent)]" /> Photo gallery</div>
+      <div className="mt-5 grid grid-cols-3 gap-3">
+        {images.slice(0, 6).map((image, index) => <img key={`${image}-${index}`} src={image} alt="" className="aspect-square w-full rounded-full object-cover ring-1 ring-black/10" />)}
+      </div>
+      <p className="mt-4 text-center text-sm font-semibold text-[var(--slot4-muted-text)]">{title}</p>
+    </section>
+  )
+}
+
+function HoursBox() {
+  const hours = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+  return (
+    <section className="border border-[var(--editable-border)] bg-white p-5 shadow-sm">
+      <div className="flex items-center justify-between border-b border-black/10 pb-4">
+        <p className="text-sm font-black">Hours</p>
+        <span className="text-xs font-black uppercase tracking-[0.16em] text-emerald-600"></span>
+      </div>
+      <div className="mt-4 grid gap-3 text-sm text-[var(--slot4-muted-text)]">
+        {hours.map((day) => <div key={day} className="flex justify-between gap-4"><span>{day}</span><span className="font-semibold text-[var(--slot4-page-text)]">8:00 am - 11:00 pm</span></div>)}
+      </div>
+    </section>
   )
 }
 
@@ -385,7 +482,6 @@ function RelatedPanel({ task, post, related, compact = false }: { task: TaskKey;
           <div className="mt-4 grid gap-3 text-sm font-bold opacity-75">
             <p className="inline-flex items-center gap-2"><Tag className="h-4 w-4" /> Task: {taskConfig?.label || task}</p>
             <p className="inline-flex items-center gap-2"><CheckCircle2 className="h-4 w-4" /> Site: {SITE_CONFIG.name}</p>
-            {post.publishedAt ? <p>Published: {new Date(post.publishedAt).toLocaleDateString()}</p> : null}
           </div>
         </div>
       ) : null}
@@ -411,7 +507,6 @@ function RelatedCard({ task, post }: { task: TaskKey; post: SitePost }) {
       {image && task !== 'sbm' ? <img src={image} alt="" className="h-20 w-20 shrink-0 rounded-xl object-cover" /> : <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-xl bg-[var(--detail-bg)]"><FileText className="h-6 w-6 opacity-45" /></div>}
       <div className="min-w-0">
         <h3 className="line-clamp-3 text-sm font-black leading-tight tracking-[-0.03em]">{post.title}</h3>
-        <p className="mt-2 line-clamp-2 text-xs leading-5 opacity-60">{summaryText(post)}</p>
       </div>
     </Link>
   )

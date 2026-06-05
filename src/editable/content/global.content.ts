@@ -3,12 +3,12 @@ import { slot4BrandConfig } from '@/editable/theme/brand.config'
 export const globalContent = {
   site: {
     name: slot4BrandConfig.siteName,
-    tagline: slot4BrandConfig.tagline || 'Independent reading platform',
+    tagline: slot4BrandConfig.tagline || 'Trusted business directory',
     domain: slot4BrandConfig.domain,
     baseUrl: slot4BrandConfig.baseUrl,
   },
   nav: {
-    tagline: 'Independent reading platform',
+    tagline: 'Trusted business directory',
     primaryLinks: [
       { label: 'Articles', href: '/articles' },
       { label: 'Visuals', href: '/image-sharing' },
@@ -21,8 +21,8 @@ export const globalContent = {
     },
   },
   footer: {
-    tagline: 'Stories, resources, and discoverable posts',
-    description: 'A connected publishing surface for articles, visuals, listings, profiles, bookmarks, and downloadable resources.',
+    tagline: 'Find trusted businesses. Build local visibility.',
+    description: 'A focused business directory helping customers discover dependable companies and helping businesses earn attention with clear, useful listings.',
     columns: [
       {
         title: 'Explore',
@@ -41,7 +41,7 @@ export const globalContent = {
         ],
       },
     ],
-    bottomNote: 'Built for clean discovery and connected publishing.',
+    bottomNote: 'Built for confident business discovery.',
   },
   commonLabels: {
     readMore: 'Read more',

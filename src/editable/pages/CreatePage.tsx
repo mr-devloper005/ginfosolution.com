@@ -32,7 +32,7 @@ const taskIcon: Record<string, typeof FileText> = {
   sbm: ArrowRight,
 }
 
-const fieldClass = 'rounded-2xl border border-[var(--editable-border)] bg-white px-4 py-3 text-sm font-bold text-[var(--editable-page-text,#2f1d16)] outline-none transition placeholder:text-current/35 focus:border-current'
+const fieldClass = 'border border-black/20 bg-white px-4 py-3 text-sm font-semibold text-black outline-none transition placeholder:text-neutral-500 focus:border-[var(--slot4-accent)]'
 
 const saveDraft = (draft: DraftPost) => {
   try {
