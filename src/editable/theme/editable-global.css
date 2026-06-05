@@ -17,6 +17,34 @@ body {
   background-image: var(--slot4-body-gradient) !important;
 }
 
+:root {
+  --editable-container: 1200px;
+  --editable-page-bg: var(--slot4-page-bg);
+  --editable-page-text: var(--slot4-page-text);
+  --editable-border: rgba(17, 17, 17, 0.12);
+}
+
+input,
+textarea,
+select {
+  color: #171717 !important;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #7b7b7b !important;
+  opacity: 1;
+}
+
+button,
+a {
+  text-underline-offset: 3px;
+}
+
+.article-content p + p {
+  margin-top: 1.25rem;
+}
+
 ::selection {
   background: color-mix(in oklab, var(--slot4-accent-fill) 22%, transparent);
   color: var(--slot4-page-text);
