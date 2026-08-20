@@ -3,7 +3,6 @@ import { ArrowRight, Building2, CheckCircle2, MapPin, Search, Star } from 'lucid
 import type { SitePost } from '@/lib/site-connector'
 import type { HomeTimeSection } from '@/lib/task-data'
 import type { TaskKey } from '@/lib/site-config'
-import { SITE_CONFIG } from '@/lib/site-config'
 import { pagesContent } from '@/editable/content/pages.content'
 import { editableDesignContract as dc, editablePalette as pal } from '@/editable/layouts/design-contract'
 import { getEditablePostImage, postHref } from '@/editable/cards/PostCards'
@@ -24,10 +23,6 @@ function getExcerpt(post?: SitePost | null, limit = 130) {
     ''
   const clean = raw.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
   return clean.length > limit ? `${clean.slice(0, limit).trim()}...` : clean
-}
-
-function taskLabel(task: TaskKey) {
-  return SITE_CONFIG.tasks.find((item) => item.key === task)?.label || task
 }
 
 function MiniPoster({ post, href }: { post: SitePost; href: string }) {
@@ -127,7 +122,7 @@ function Rail({ children, className = '' }: { children: React.ReactNode; classNa
   return <div className={`${dc.layout.rail} ${className}`}>{children}</div>
 }
 
-export function EditableHomeHero({ primaryTask, primaryRoute }: HomeSectionProps) {
+export function EditableHomeHero({ primaryTask: _primaryTask, primaryRoute: _primaryRoute }: HomeSectionProps) {
   const heroTitle = pagesContent.home.hero.title.join(' ')
   return (
     <section className="relative overflow-hidden bg-white">
