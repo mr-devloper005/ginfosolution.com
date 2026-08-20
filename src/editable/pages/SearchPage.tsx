@@ -8,6 +8,7 @@ import { getMockPostsForTask } from '@/lib/mock-posts'
 import { SITE_CONFIG, type TaskKey } from '@/lib/site-config'
 import type { SitePost } from '@/lib/site-connector'
 import { EditableSiteShell } from '@/editable/shell/EditableSiteShell'
+import { htmlToText, toExcerpt } from '@/editable/content/html-text'
 import { pagesContent } from '@/editable/content/pages.content'
 
 export const revalidate = 3
@@ -20,8 +21,7 @@ export async function generateMetadata(): Promise<Metadata> {
   })
 }
 
-const stripHtml = (value: string) => value.replace(/<[^>]*>/g, ' ')
-const compactText = (value: unknown) => typeof value === 'string' ? stripHtml(value).replace(/\s+/g, ' ').trim().toLowerCase() : ''
+const searchNorm = (value: unknown) => typeof value === 'string' ? value.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().toLowerCase() : ''
 const getContent = (post: SitePost) => post.content && typeof post.content === 'object' ? post.content as Record<string, unknown> : {}
 const getImage = (post: SitePost) => {
   const content = getContent(post)
@@ -30,20 +30,20 @@ const getImage = (post: SitePost) => {
   return media || compactRaw(content.featuredImage) || compactRaw(content.image) || compactRaw(content.thumbnail) || images || ''
 }
 const compactRaw = (value: unknown) => typeof value === 'string' ? value.trim() : ''
-const summaryOf = (post: SitePost) => post.summary || compactRaw(getContent(post).description) || compactRaw(getContent(post).excerpt) || ''
+const summaryOf = (post: SitePost) => toExcerpt(post.summary || compactRaw(getContent(post).description) || compactRaw(getContent(post).excerpt) || '', 200)
 
 const matches = (post: SitePost, query: string, category: string, task: string) => {
   const content = getContent(post)
-  const typeText = compactText(content.type)
+  const typeText = searchNorm(content.type)
   if (typeText === 'comment') return false
   const derivedTask = getPostTaskKey(post) || typeText
   if (task && derivedTask !== task) return false
-  const categoryText = compactText(content.category)
-  const tagsText = compactText(Array.isArray(post.tags) ? post.tags.join(' ') : '')
+  const categoryText = searchNorm(content.category)
+  const tagsText = searchNorm(Array.isArray(post.tags) ? post.tags.join(' ') : '')
   if (category && !(categoryText || tagsText).includes(category)) return false
   if (!query) return true
   return [post.title, post.summary, content.description, content.body, content.excerpt, content.category, Array.isArray(post.tags) ? post.tags.join(' ') : '']
-    .some((value) => compactText(value).includes(query))
+    .some((value) => searchNorm(value).includes(query))
 }
 
 function SearchResultCard({ post, index }: { post: SitePost; index: number }) {
@@ -65,8 +65,8 @@ function SearchResultCard({ post, index }: { post: SitePost; index: number }) {
       ) : null}
       <div className="p-5 sm:p-6">
         {!image ? <span className="rounded-full bg-[var(--editable-page-text,#211713)] px-3 py-1 text-[11px] font-black uppercase tracking-[0.18em] text-white">{taskLabel}</span> : null}
-        <h2 className="mt-4 line-clamp-3 text-2xl font-black leading-[0.95] tracking-[-0.06em] text-[var(--editable-page-text,#211713)]">{post.title}</h2>
-        {summary ? <p className="mt-4 line-clamp-3 text-sm font-semibold leading-7 text-[var(--editable-page-text,#211713)]/65">{summary}</p> : null}
+        <h2 className="mt-4 line-clamp-3 text-2xl font-black leading-[0.95] tracking-[-0.06em] text-[var(--editable-page-text,#211713)]">{htmlToText(post.title)}</h2>
+        {summary ? <p className="mt-4 line-clamp-3 text-sm font-semibold leading-7 text-[var(--editable-page-text,#211713)]/65">{htmlToText(summary)}</p> : null}
         <span className="mt-5 inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] opacity-60 group-hover:opacity-100">Open result <ArrowRight className="h-4 w-4" /></span>
       </div>
     </Link>
