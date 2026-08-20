@@ -10,6 +10,7 @@ import { taskPageMetadata } from '@/config/site.content'
 import { taskPageVoices } from '@/editable/content/task-pages.content'
 import { EditableSiteShell } from '@/editable/shell/EditableSiteShell'
 import { getVisualPreset, visualSystem } from '@/editable/theme/visual-system'
+import { htmlToText, toExcerpt } from '@/editable/content/html-text'
 
 export const revalidate = 3
 
@@ -36,7 +37,7 @@ const getImages = (post: SitePost) => {
 const placeholder = '/placeholder.svg?height=900&width=1200'
 const getImage = (post: SitePost) => getImages(post)[0] || placeholder
 const getCategory = (post: SitePost, fallback: string) => asText(getContent(post).category) || post.tags?.[0] || fallback
-const getSummary = (post: SitePost) => post.summary || asText(getContent(post).description) || asText(getContent(post).excerpt) || asText(getContent(post).body)
+const getSummary = (post: SitePost) => toExcerpt(post.summary || asText(getContent(post).description) || asText(getContent(post).excerpt) || asText(getContent(post).body), 200)
 const getField = (post: SitePost, keys: string[]) => {
   const content = getContent(post)
   for (const key of keys) {
@@ -164,7 +165,7 @@ function ArticleArchiveCard({ post, href, index }: { post: SitePost; href: strin
       </div>
       <div className="p-5">
         <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[var(--archive-accent)]">Story {String(index + 1).padStart(2, '0')}</p>
-        <h2 className="mt-2 text-xl font-black leading-tight tracking-[-0.04em]">{post.title}</h2>
+        <h2 className="mt-2 text-xl font-black leading-tight tracking-[-0.04em]">{htmlToText(post.title)}</h2>
         <p className="mt-3 line-clamp-3 text-sm leading-6 opacity-65">{getSummary(post)}</p>
       </div>
     </Link>

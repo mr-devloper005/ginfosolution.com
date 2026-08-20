@@ -8,6 +8,7 @@ import { getTaskConfig, SITE_CONFIG, type TaskKey } from '@/lib/site-config'
 import type { SitePost } from '@/lib/site-connector'
 import { EditableSiteShell } from '@/editable/shell/EditableSiteShell'
 import { getVisualPreset, visualSystem } from '@/editable/theme/visual-system'
+import { toExcerpt, formatBodyHtml } from '@/editable/content/html-text'
 
 export const revalidate = 3
 
@@ -54,14 +55,6 @@ const getBody = (post: SitePost) => {
   return asText(content.body) || asText(content.description) || asText(content.details) || post.summary || 'Details will appear here once available.'
 }
 
-const escapeHtml = (value: string) => value
-  .replace(/&/g, '&amp;')
-  .replace(/</g, '&lt;')
-  .replace(/>/g, '&gt;')
-  .replace(/"/g, '&quot;')
-  .replace(/'/g, '&#39;')
-
-const safeUrl = (value: string) => /^https?:\/\//i.test(value) ? value : '#'
 const externalUrl = (value: string) => {
   if (!value) return ''
   if (/^https?:\/\//i.test(value)) return value
@@ -69,37 +62,7 @@ const externalUrl = (value: string) => {
   return `https://${value}`
 }
 
-const linkifyMarkdown = (value: string) => value
-  .replace(/\[([^\]]+)]\((https?:\/\/[^\s)]+)\)/gi, (_match, label, url) => `<a href="${safeUrl(url)}" target="_blank" rel="nofollow noopener noreferrer">${label}</a>`)
-
-const linkifyText = (value: string) => linkifyMarkdown(value)
-  .replace(/(^|[\s(>])((https?:\/\/)[^\s<)]+)/gi, (_match, prefix, url) => `${prefix}<a href="${safeUrl(url)}" target="_blank" rel="nofollow noopener noreferrer">${url}</a>`)
-
-const hardenLinks = (html: string) => html.replace(/<a\s+([^>]*href=["'][^"']+["'][^>]*)>/gi, (_match, attrs) => {
-  let next = String(attrs).replace(/\s+on\w+=("[^"]*"|'[^']*'|[^\s>]+)/gi, '')
-  if (!/\starget=/i.test(next)) next += ' target="_blank"'
-  if (!/\srel=/i.test(next)) next += ' rel="nofollow noopener noreferrer"'
-  return `<a ${next}>`
-})
-
-const sanitizeHtml = (html: string) => hardenLinks(html
-  .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
-  .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
-  .replace(/<(iframe|object|embed)[^>]*>[\s\S]*?<\/\1>/gi, '')
-  .replace(/\s+on\w+=("[^"]*"|'[^']*'|[^\s>]+)/gi, '')
-  .replace(/(href|src)=(['"])javascript:[\s\S]*?\2/gi, '$1="#"'))
-
-const formatPlainText = (raw: string) => {
-  const value = raw.trim()
-  if (!value) return ''
-  if (/<[a-z][\s\S]*>/i.test(value)) return sanitizeHtml(linkifyMarkdown(value))
-  return value
-    .split(/\n{2,}/)
-    .map((part) => `<p>${linkifyText(escapeHtml(part).replace(/\n/g, '<br />'))}</p>`)
-    .join('')
-}
-
-const summaryText = (post: SitePost) => post.summary || asText(getContent(post).description) || asText(getContent(post).excerpt) || ''
+const summaryText = (post: SitePost) => toExcerpt(post.summary || asText(getContent(post).description) || asText(getContent(post).excerpt) || '', 200)
 const categoryOf = (post: SitePost, fallback: string) => asText(getContent(post).category) || post.tags?.[0] || fallback
 const mapSrcFor = (post: SitePost) => {
   const address = getField(post, ['address', 'location', 'city'])
@@ -387,7 +350,7 @@ function ProfileDetail({ post, related }: { post: SitePost; related: SitePost[] 
 }
 
 function BodyContent({ post, compact = false }: { post: SitePost; compact?: boolean }) {
-  return <div className={`article-content mt-8 max-w-none ${compact ? 'text-base leading-8' : 'text-lg leading-9'} opacity-80`} dangerouslySetInnerHTML={{ __html: formatPlainText(getBody(post)) }} />
+  return <div className={`article-content mt-8 max-w-none ${compact ? 'text-base leading-8' : 'text-lg leading-9'} opacity-80`} dangerouslySetInnerHTML={{ __html: formatBodyHtml(getBody(post)) }} />
 }
 
 function InfoGrid({ items }: { items: Array<[string, string, typeof MapPin]> }) {
@@ -472,7 +435,7 @@ function BadgeLine({ label, value }: { label: string; value: string }) {
   return <div className="flex items-center justify-between gap-4 rounded-2xl border border-white/15 bg-white/10 px-4 py-3 text-sm"><span className="font-black uppercase tracking-[0.16em] opacity-60">{label}</span><span className="font-black">{value}</span></div>
 }
 
-function RelatedPanel({ task, post, related, compact = false }: { task: TaskKey; post: SitePost; related: SitePost[]; compact?: boolean }) {
+function RelatedPanel({ task, related, compact = false }: { task: TaskKey; post: SitePost; related: SitePost[]; compact?: boolean }) {
   const taskConfig = getTaskConfig(task)
   return (
     <aside className="min-w-0 space-y-5">
